@@ -11,3 +11,4 @@ typechain-types/
 .next/
 out/
 *.log
+!main.log

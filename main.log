@@ -1,0 +1,14 @@
+main log - AegisP2P
+
+[2026-07-14 14:55] - Initialized git repo
+[2026-07-14 14:55] - Added remote origin: https://github.com/Amitk003/AegisP2P.git
+[2026-07-14 14:56] - Created docs-setup branch
+[2026-07-14 14:56] - Created .gitignore (Node + Hardhat + Next.js standard ignores)
+[2026-07-14 14:56] - Created README.md (project overview in simple English)
+[2026-07-14 14:56] - Created docs/ directory
+[2026-07-14 14:57] - Created docs/architecture.md (system architecture overview)
+[2026-07-14 14:57] - Created docs/setup.md (setup instructions)
+[2026-07-14 14:57] - Created docs/contracts.md (contract documentation)
+[2026-07-14 15:00] - Commit 1: .gitignore
+[2026-07-14 15:00] - Commit 2: README.md
+[2026-07-14 15:00] - Commit 3: docs/ (architecture.md, setup.md, contracts.md)
