@@ -10,45 +10,62 @@ Each escrow goes through these states:
 
 | State | Meaning |
 |-------|---------|
-| Created | Escrow is created but crypto not yet deposited |
-| Deposited | Seller has locked crypto in the contract |
+| Funded | Seller created escrow and locked crypto in one transaction |
 | Verified | Fiat payment proof is verified, crypto released to buyer |
 | Refunded | Escrow expired, crypto returned to seller |
 
 ### Main Functions
 
-**createEscrow(buyer, terms)**
-- Seller creates a new escrow for a buyer
-- Sets the payment terms (amount, currency, reference ID)
-
-**depositCrypto(escrowId)**
-- Seller locks crypto into the escrow
-- Only callable by the seller who created it
+**createEscrow(buyer, expectedHash)**
+- Seller creates a new escrow and locks crypto in one transaction
+- Function is payable (accepts MON directly)
+- `expectedHash` = `keccak256(amount, reference, recipient)` of the expected fiat payment
+- Emits `EscrowFunded` event
+- No separate `depositCrypto` function needed. One transaction, one gas fee.
 
 **verifyFiatAndRelease(escrowId, proof)**
 - Buyer submits a Reclaim zk proof of fiat payment
-- Contract verifies the proof
-- If valid, crypto is released to the buyer
+- Contract extracts the `parametersHash` from the Reclaim proof
+- Compares it against `expectedHash` stored during escrow creation
+- If hashes match, crypto is released to the buyer
 - Uses MIP-4 reserve balance check before verification
 - Uses MIP-3 linear memory pricing for efficient proof handling
+- No on-chain string or JSON parsing
 
 **refund(escrowId)**
-- Seller can claim refund after timeout period
-- Only works if buyer did not submit proof in time
+- Seller can claim refund after timeout period (2 hours)
+- Only works if buyer did not submit valid proof in time
+- No human arbiters, no dispute state. Pure code-governed.
 
 ### Events
 
-- `EscrowCreated(escrowId, seller, buyer, amount)`
-- `CryptoDeposited(escrowId)`
+- `EscrowFunded(escrowId, seller, buyer, amount)`
 - `FiatVerified(escrowId, buyer)`
 - `EscrowRefunded(escrowId)`
 
 ### Security Features
 
-- ReentrancyGuard to prevent reentrancy attacks
-- Ownable2Step for admin controls
-- Pausable for emergency stops
-- Timeout-based refunds for stuck escrows
+- **ReentrancyGuard** - Prevents reentrancy attacks on release and refund
+- **Ownable2Step** - Admin controls for `pauseNewEscrows()` only
+- **Pausable** - Only blocks creation of new escrows. Release and refund functions are always unpausable, so existing user funds are never locked by admin.
+- **Timeout-based refunds** - 2 hour expiry, no disputes needed
+
+### Why no dispute logic?
+
+Disputes need human arbiters and multisigs, which adds trust back into the system. The design keeps it trustless:
+- Buyer submits a valid zk proof = gets crypto
+- Buyer fails to submit proof within 2 hours = seller gets refund
+- No third party needed
+
+### How proof verification works (no string parsing)
+
+1. When creating escrow, seller passes `keccak256(amount, reference, recipient)`
+2. This hash is stored as `expectedHash` in the escrow struct
+3. When buyer submits Reclaim proof, the contract reads the `parametersHash` from the proof
+4. Contract checks: `parametersHash == expectedHash`
+5. If match, crypto is released
+
+No string parsing, no JSON extraction, no regex in Solidity. Just hash comparison.
 
 ## MIP-3 and MIP-4
 
