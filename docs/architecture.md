@@ -13,30 +13,47 @@ AegisP2P has three main parts:
 ```
 Seller                    Frontend                    Smart Contract            Buyer
   |                          |                             |                      |
-  |-- Lock crypto ---------->|-- deposit() --------------->|                      |
-  |                          |                             |-- Escrow Created     |
-  |                          |                             |                      |
+  |-- Create + Lock -------->|-- createEscrow() ---------->|                      |
+  |   (payable)              |   (crypto + hash)           |-- Escrow Funded     |
   |                          |                             |                      |
   |                          |<--- Generate QR code -------|                      |
   |                          |                             |                      |
-  |                          |---- QR code for Reclaim ----|--------------------->|
+  |                          |       QR code for Reclaim --|--------------------->|
   |                          |                             |                      |
-  |                          |                             |    Buyer sends fiat  |
-  |<-- Fiat received --------|                             |    to seller's bank  |
+  |                          |                             |   Buyer sends fiat   |
+  |<-- Fiat received --------|                             |   to seller's bank   |
   |                          |                             |                      |
-  |                          |<---- zk proof of fiat ------|--------------------->|
+  |                          |<--- zk proof of fiat -------|----------------------|
   |                          |                             |                      |
-  |                          |-- verifyProof() ----------->|                      |
-  |                          |                             |-- Verify zk proof    |
-  |                          |                             |-- Release crypto     |
+  |                          |-- verifyFiatAndRelease() -->|                      |
+  |                          |                             |-- Check keccak256   |
+  |                          |                             |   hash match        |
+  |                          |                             |-- Verify zk proof   |
+  |                          |                             |-- Release crypto    |
   |                          |<--- Crypto released --------|--------------------->|
 ```
+
+## State Machine
+
+```
+         createEscrow (payable)
+              |
+              v
+        [ Funded ] ------> [ Verified ]  (buyer submits valid proof)
+              |                   
+              |  (2hr timeout)     
+              v                    
+        [ Refunded ]              
+```
+
+Only 3 states. No empty Created state, no dispute state.
 
 ## Key Parts
 
 ### Smart Contract (AegisEscrow.sol)
 - Holds crypto funds safely
 - Checks zero-knowledge proofs before releasing funds
+- Uses keccak256 hash comparison instead of on-chain string parsing
 - Uses Monad MIP-3 for cheaper proof verification
 - Uses Monad MIP-4 to check gas reserve before heavy computation
 
@@ -44,8 +61,9 @@ Seller                    Frontend                    Smart Contract            
 - Captures HTTPS traffic from bank websites
 - Creates a zero-knowledge proof that the payment happened
 - Does not expose user passwords or bank details
+- Provides a `parametersHash` that the contract compares against expected values
 
 ### Frontend
-- Seller dashboard to lock crypto
-- Buyer dashboard to generate proofs and claim crypto
-- Shows real-time status of escrows
+- Seller dashboard: create escrow with one click
+- Buyer dashboard: generate proof, verify, and claim crypto
+- Shows real-time status of escrows via event listeners
