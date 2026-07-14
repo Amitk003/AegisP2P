@@ -1,14 +1,5 @@
-node_modules/
-dist/
-build/
-.env
-.env.local
-.cache/
-coverage/
-artifacts/
-cache/
-typechain-types/
-.next/
-out/
-*.log
-!main.log
+
+main.log
+
+Monad Hackathon Project Strategy.md
+
