@@ -73,9 +73,9 @@ Seller                    Frontend                      Smart Contract          
 - Holds crypto funds safely
 - Generates unique `paymentRef` per escrow for payment binding
 - Buyer calls `markAsPaid` before sending fiat to prevent front-running
-- Constructs expected context `escrowId:contractAddress` and compares hash (no string parsing)
+- Constructs expected context by converting to strings first (`Strings.toString`, `Strings.toHexString`), then compares hash against `proof.claimInfo.context`
 - Constructs expected JSON from stored fields including `paymentRef` as memo using `abi.encodePacked`
-- Compares hash of constructed JSON against Reclaim proof's parametersHash
+- Computes hash of `proof.claimInfo.parameters` directly (no pre-computed `parametersHash` in the SDK)
 - Prevents replay attacks with `usedClaims` using `proof.signedClaim.claim.identifier`
 - Uses Monad MIP-3 for cheaper proof verification
 - Uses Monad MIP-4 to check gas reserve before heavy computation
@@ -84,9 +84,9 @@ Seller                    Frontend                      Smart Contract          
 - Captures HTTPS traffic from Stripe receipt pages
 - Creates a zero-knowledge proof that the payment happened
 - Does not expose user passwords or bank details
-- Context field contains `escrowId:contractAddress` for binding (compared via hash)
+- Context field contains `escrowId:contractAddress` for binding (compared via hash, converted to strings first)
 - Parameters include `amount`, `recipient`, `reference`, and `memo` (the paymentRef)
-- Provides a `parametersHash` that the contract compares against expected values
+- No pre-computed `parametersHash` in the SDK - contract hashes `proof.claimInfo.parameters` directly
 
 ### Frontend
 - Seller dashboard: create escrow with one click
