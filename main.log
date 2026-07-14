@@ -73,3 +73,12 @@ main log - AegisP2P
 [2026-07-14 16:50] - Created .env.local.example
 [2026-07-14 16:50] - Updated docs/setup.md with frontend setup instructions
 [2026-07-14 16:50] - Build successful
+[2026-07-14 17:00] - Created frontend-ui branch from main
+[2026-07-14 17:00] - Created src/types/escrow.ts (EscrowData, EscrowState)
+[2026-07-14 17:00] - Created StateBadge component (color-coded state labels)
+[2026-07-14 17:00] - Created TimerDisplay component (countdown to refund)
+[2026-07-14 17:00] - Created EscrowCard component (state-driven actions)
+[2026-07-14 17:00] - Created CreateEscrowForm component (buyer, amount, recipient, ref)
+[2026-07-14 17:00] - Created EscrowList component (empty state + list)
+[2026-07-14 17:00] - Created Header component (title + ConnectButton wrapper)
+[2026-07-14 17:00] - Updated page.tsx with 2-column layout (form + list)
