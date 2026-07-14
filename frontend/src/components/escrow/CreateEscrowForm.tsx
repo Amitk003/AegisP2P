@@ -5,6 +5,7 @@ import { useState } from "react";
 interface CreateEscrowFormProps {
   onSubmit: (data: {
     buyer: string;
+    cryptoAmount: string;
     fiatAmount: string;
     recipient: string;
     refId: string;
@@ -13,13 +14,14 @@ interface CreateEscrowFormProps {
 
 export function CreateEscrowForm({ onSubmit }: CreateEscrowFormProps) {
   const [buyer, setBuyer] = useState("");
+  const [cryptoAmount, setCryptoAmount] = useState("");
   const [fiatAmount, setFiatAmount] = useState("");
   const [recipient, setRecipient] = useState("");
   const [refId, setRefId] = useState("");
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onSubmit({ buyer, fiatAmount, recipient, refId });
+    onSubmit({ buyer, cryptoAmount, fiatAmount, recipient, refId });
   }
 
   return (
@@ -37,6 +39,22 @@ export function CreateEscrowForm({ onSubmit }: CreateEscrowFormProps) {
             value={buyer}
             onChange={(e) => setBuyer(e.target.value)}
             placeholder="0x..."
+            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 mb-1">
+            Crypto Amount (MON)
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={cryptoAmount}
+            onChange={(e) => setCryptoAmount(e.target.value)}
+            placeholder="1.0"
             className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             required
           />

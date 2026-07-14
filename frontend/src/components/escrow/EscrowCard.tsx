@@ -1,8 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { EscrowData, EscrowState } from "@/types/escrow";
 import { StateBadge } from "./StateBadge";
 import { TimerDisplay } from "./TimerDisplay";
+
+const TIMEOUT_DURATION = 2 * 60 * 60;
 
 interface EscrowCardProps {
   escrow: EscrowData;
@@ -17,11 +20,32 @@ export function EscrowCard({
   onVerify,
   onRefund,
 }: EscrowCardProps) {
+  const [isRefundable, setIsRefundable] = useState(false);
+
+  useEffect(() => {
+    function check() {
+      const now = Math.floor(Date.now() / 1000);
+      const isFundedExpired =
+        escrow.state === EscrowState.Funded &&
+        now >= escrow.createdAt + TIMEOUT_DURATION;
+      const isAwaitingExpired =
+        escrow.state === EscrowState.AwaitingProof &&
+        now >= escrow.paidAt + TIMEOUT_DURATION;
+      setIsRefundable(isFundedExpired || isAwaitingExpired);
+    }
+    check();
+    const interval = setInterval(check, 1000);
+    return () => clearInterval(interval);
+  }, [escrow]);
+
   const isBuyerAction =
     escrow.state === EscrowState.Funded && onMarkAsPaid;
   const isVerifyAction =
     escrow.state === EscrowState.AwaitingProof && onVerify;
-  const isRefundAction = onRefund;
+  const isRefundAction =
+    onRefund &&
+    (escrow.state === EscrowState.Funded ||
+      escrow.state === EscrowState.AwaitingProof);
 
   return (
     <div className="rounded-xl border border-zinc-200 p-5 bg-white">
@@ -36,6 +60,12 @@ export function EscrowCard({
       </div>
 
       <div className="space-y-2 text-sm text-zinc-600 mb-4">
+        <div className="flex justify-between">
+          <span>Crypto Locked</span>
+          <span className="text-zinc-900">
+            {escrow.amount.toString()} MON
+          </span>
+        </div>
         <div className="flex justify-between">
           <span>Recipient</span>
           <span className="text-zinc-900 font-mono text-xs">
@@ -94,7 +124,12 @@ export function EscrowCard({
         {isRefundAction && (
           <button
             onClick={() => onRefund(escrow.escrowId)}
-            className="flex-1 rounded-lg border border-zinc-300 text-zinc-700 text-sm font-medium py-2 hover:bg-zinc-50 transition-colors"
+            disabled={!isRefundable}
+            className={`flex-1 rounded-lg border text-sm font-medium py-2 transition-colors ${
+              isRefundable
+                ? "border-zinc-300 text-zinc-700 hover:bg-zinc-50"
+                : "border-zinc-200 text-zinc-400 cursor-not-allowed"
+            }`}
           >
             Refund
           </button>
