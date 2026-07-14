@@ -19,7 +19,7 @@ AegisP2P prevents this by making sure the fiat payment is verified using a crypt
 ## Tech Stack
 
 - **Blockchain:** Monad Network (EVM compatible)
-- **Smart Contracts:** Solidity 0.8.20
+- **Smart Contracts:** Solidity 0.8.26
 - **ZK Verification:** Reclaim Protocol (zkTLS)
 - **Frontend:** Next.js + Tailwind CSS + Wagmi
 

@@ -26,9 +26,8 @@ Create a `.env` file in the `contracts` folder:
 ```
 PRIVATE_KEY=your_wallet_private_key
 MONAD_TESTNET_RPC=https://testnet-rpc.monad.xyz
-MONAD_MAINNET_RPC=https://mainnet-rpc.monad.xyz
-RECLAIM_APP_ID=your_reclaim_app_id
-RECLAIM_APP_SECRET=your_reclaim_app_secret
+RECLAIM_VERIFIER_ADDRESS=deployed_verifier_contract_address
+BLOCK_EXPLORER_API_KEY=your_block_explorer_api_key
 ```
 
 Compile the contracts:
@@ -53,7 +52,7 @@ npm install
 Create a `.env.local` file in the `frontend` folder:
 
 ```
-NEXT_PUBLIC_MONAD_RPC=https://testnet-rpc.monad.xyz
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
 NEXT_PUBLIC_ESCROW_CONTRACT_ADDRESS=deployed_contract_address_here
 ```
 
@@ -67,7 +66,7 @@ Open http://localhost:3000 in your browser.
 
 ## Step 4: Environment Variables
 
-Copy `.env.example` to `.env` in the `contracts/` folder and `.env.local.example` to `.env.local` in the `frontend/` folder. Fill in the values.
+Copy `.env.example` files to their respective folders and remove the `.example` extension. Fill in the values.
 
 ## Important Notes
 
