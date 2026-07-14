@@ -159,7 +159,7 @@ contract AegisEscrow is ReentrancyGuard, Pausable, Ownable2Step {
             )
         );
         require(
-            keccak256(abi.encodePacked(reclaimProof.claimInfo.context)) == keccak256(abi.encodePacked(expectedContext)),
+            keccak256(bytes(reclaimProof.claimInfo.context)) == keccak256(bytes(expectedContext)),
             "Invalid context"
         );
 
@@ -180,7 +180,7 @@ contract AegisEscrow is ReentrancyGuard, Pausable, Ownable2Step {
 
         // 4. Check expectedJson hash matches claimInfo.parameters hash
         require(
-            keccak256(abi.encodePacked(reclaimProof.claimInfo.parameters)) == keccak256(abi.encodePacked(expectedJson)),
+            keccak256(bytes(reclaimProof.claimInfo.parameters)) == keccak256(bytes(expectedJson)),
             "Invalid parameters"
         );
 
@@ -197,9 +197,8 @@ contract AegisEscrow is ReentrancyGuard, Pausable, Ownable2Step {
         }
 
         // 7. Reclaim SDK proof verification
-        if (reclaimVerifier != address(0)) {
-            IReclaim(reclaimVerifier).verifyProof(reclaimProof);
-        }
+        require(reclaimVerifier != address(0), "Reclaim verifier not set");
+        IReclaim(reclaimVerifier).verifyProof(reclaimProof);
 
         // 8. Release funds
         escrow.state = EscrowState.Verified;

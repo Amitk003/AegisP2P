@@ -326,14 +326,19 @@ describe("AegisEscrow", function () {
       ).to.be.revertedWith("Escrow not awaiting proof");
     });
 
-    it("Should revert if the same proof is replayed", async function () {
+    it("Should revert if trying to verify an escrow that is already verified", async function () {
       // First verification succeeds
       await escrowContract.connect(buyer).verifyFiatAndRelease(escrowId, validEncodedProof);
 
-      // Replay fails
+      // Re-verifying the same escrow fails due to state check
       await expect(
         escrowContract.connect(buyer).verifyFiatAndRelease(escrowId, validEncodedProof)
-      ).to.be.revertedWith("Escrow not awaiting proof"); // Since it's already verified
+      ).to.be.revertedWith("Escrow not awaiting proof");
+    });
+
+    it("Should revert if the same proof is replayed on a different escrow", async function () {
+      // First verification succeeds on escrow 0
+      await escrowContract.connect(buyer).verifyFiatAndRelease(escrowId, validEncodedProof);
 
       // Deploy another escrow to test usedClaims check directly
       await escrowContract.connect(seller).createEscrow(
@@ -374,6 +379,7 @@ describe("AegisEscrow", function () {
         escrowContract.connect(buyer).verifyFiatAndRelease(1, replayedClaimProof)
       ).to.be.revertedWith("Proof already used");
     });
+
 
     it("Should revert if context (escrowId or contractAddress) does not match", async function () {
       const invalidRawProof = {

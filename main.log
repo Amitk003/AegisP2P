@@ -59,3 +59,7 @@ main log - AegisP2P
   - Checked MIP-4 reserve balance (dippedIntoReserve) before ZK proof verification
 [2026-07-14 16:30] - Created MockReclaim.sol mock verifier for testing Reclaim validations
 [2026-07-14 16:30] - Created test/AegisEscrow.test.js with 15 test cases covering E2E escrow lifecycles, reentrancy, timing constraints, and replay defenses
+[2026-07-14 16:45] - Applied final corrections and gas optimizations:
+  - Replaced redundant abi.encodePacked wraps in keccak256 with direct bytes() casts (saving gas)
+  - Enforced strict reclaimVerifier check (revert if address is 0) to eliminate silent validation skips
+  - Split and cleaned up replay test suite to separate state-transition asserts from actual usedClaims double-spend defenses
