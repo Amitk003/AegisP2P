@@ -11,59 +11,76 @@ AegisP2P has three main parts:
 ## Flow
 
 ```
-Seller                    Frontend                    Smart Contract            Buyer
-  |                          |                             |                      |
-  |-- Create + Lock -------->|-- createEscrow() ---------->|                      |
-  |   (payable)              |   (crypto + hash)           |-- Escrow Funded     |
-  |                          |                             |                      |
-  |                          |<--- Generate QR code -------|                      |
-  |                          |                             |                      |
-  |                          |       QR code for Reclaim --|--------------------->|
-  |                          |                             |                      |
-  |                          |                             |   Buyer sends fiat   |
-  |<-- Fiat received --------|                             |   to seller's bank   |
-  |                          |                             |                      |
-  |                          |<--- zk proof of fiat -------|----------------------|
-  |                          |                             |                      |
-  |                          |-- verifyFiatAndRelease() -->|                      |
-  |                          |                             |-- Check keccak256   |
-  |                          |                             |   hash match        |
-  |                          |                             |-- Verify zk proof   |
-  |                          |                             |-- Release crypto    |
-  |                          |<--- Crypto released --------|--------------------->|
+Seller                    Frontend                      Smart Contract            Buyer
+  |                          |                               |                      |
+  |-- Create + Lock -------->|-- createEscrow() ------------>|                      |
+  |   (payable)              |   (amount,recipient,ref)      |-- Escrow Funded      |
+  |                          |                               |                      |
+  |                          |<--- QR for Reclaim -----------|----------------------|
+  |                          |                               |                      |
+  |                          |                               |<-- markAsPaid() -----|
+  |                          |                               |   (before sending)   |
+  |                          |                               |-- AwaitingProof      |
+  |                          |                               |                      |
+  |                          |                               |  Buyer sends fiat    |
+  |<-- Fiat received --------|                               |  to seller's bank    |
+  |                          |                               |                      |
+  |                          |                               |<-- verifyFiatAnd---  |
+  |                          |                               |    Release(proof)    |
+  |                          |                               |                      |
+  |                          |                               |-- Check usedClaims   |
+  |                          |                               |-- Check context      |
+  |                          |                               |   (escrowId, addr)   |
+  |                          |                               |-- Build expected JSON|
+  |                          |                               |-- Hash compare       |
+  |                          |                               |-- Verify zk proof    |
+  |                          |                               |-- Release crypto    |
+  |                          |<--- Crypto released ----------|----------------------|
 ```
 
 ## State Machine
 
 ```
          createEscrow (payable)
-              |
-              v
-        [ Funded ] ------> [ Verified ]  (buyer submits valid proof)
-              |                   
-              |  (2hr timeout)     
-              v                    
-        [ Refunded ]              
+               |
+               v
+         [ Funded ] ----------------> [ Refunded ]
+               |                      (2hr timeout, no markAsPaid)
+               |
+         markAsPaid()
+               |
+               v
+      [ AwaitingProof ] ------------> [ Refunded ]
+               |                      (2hr timeout, no proof submitted)
+               |
+         verifyFiatAndRelease()
+               |
+               v
+         [ Verified ]
 ```
 
-Only 3 states. No empty Created state, no dispute state.
+4 states. Funded -> AwaitingProof -> Verified | Refunded.
 
 ## Key Parts
 
 ### Smart Contract (AegisEscrow.sol)
 - Holds crypto funds safely
-- Checks zero-knowledge proofs before releasing funds
-- Uses keccak256 hash comparison instead of on-chain string parsing
+- Buyer calls `markAsPaid` before sending fiat to prevent front-running
+- Constructs expected JSON from stored fields using `abi.encodePacked`
+- Compares hash of constructed JSON against Reclaim proof's parametersHash
+- Prevents replay attacks with `usedClaims` mapping
+- Binds proof to specific escrow via context fields (escrowId, contractAddress)
 - Uses Monad MIP-3 for cheaper proof verification
 - Uses Monad MIP-4 to check gas reserve before heavy computation
 
 ### Reclaim Protocol
-- Captures HTTPS traffic from bank websites
+- Captures HTTPS traffic from bank/Stripe websites
 - Creates a zero-knowledge proof that the payment happened
 - Does not expose user passwords or bank details
-- Provides a `parametersHash` that the contract compares against expected values
+- Context fields embed escrowId and contractAddress for binding
+- Provides a `parametersHash` of the fiat transaction details
 
 ### Frontend
 - Seller dashboard: create escrow with one click
-- Buyer dashboard: generate proof, verify, and claim crypto
+- Buyer dashboard: mark as paid, generate Reclaim proof, verify and claim crypto
 - Shows real-time status of escrows via event listeners
