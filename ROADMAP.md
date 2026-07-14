@@ -29,23 +29,24 @@ gantt
 
 *   [ ] **1.1. Project Setup:** Initialize the codebase repository and configure Foundry or Hardhat.
 *   [ ] **1.2. Core Escrow Contract (AegisEscrow.sol):**
-    *   `createEscrow(buyer, amount, recipient, reference)` - payable function. Stores raw fields, not a hash.
+    *   `createEscrow(buyer, amount, recipient, reference)` - payable function. Stores raw fields, auto-generates `paymentRef`.
     *   `markAsPaid(escrowId)` - buyer locks escrow before sending fiat. Starts 2hr proof timer. Prevents front-running on refund.
-    *   `verifyFiatAndRelease(escrowId, proof)` - replay protection via `usedClaims[proof.claimId]`, context binding (escrowId, contractAddress), expected JSON construction via `abi.encodePacked`, hash comparison, then zk verification.
+    *   `verifyFiatAndRelease(escrowId, proof)` - replay protection via `usedClaims[proof.signedClaim.claim.identifier]`, context binding via hash comparison (construct `escrowId:contractAddress`, no string parsing), expected JSON construction via `abi.encodePacked` (includes `memo` = `paymentRef`), hash comparison, then zk verification.
     *   `refund(escrowId)` - timeout based. 2hr from `createEscrow` if still in `Funded`. 2hr from `markAsPaid` if in `AwaitingProof`.
     *   Escrow states: `Funded` -> `AwaitingProof` -> `Verified` | `Refunded`.
 *   [ ] **1.3. Define On-Chain Events:**
     *   Events: `EscrowFunded`, `PaymentMarked`, `FiatVerified`, `EscrowRefunded`.
 *   [ ] **1.4. Security:**
-    *   `mapping(bytes32 => bool) public usedClaims` to prevent proof replay attacks.
-    *   Context binding: proof context must contain `escrowId` and `address(this)`.
+    *   `mapping(bytes32 => bool) public usedClaims` using `proof.signedClaim.claim.identifier`.
+    *   Context binding via hash comparison: `keccak256(abi.encodePacked(escrowId, ":", address(this))) == keccak256(proof.signedClaim.claimInfo.context)`. No `extractFieldFromContext`.
+    *   Payment binding via memo: buyer must include `paymentRef` in Stripe payment description. Parameters JSON includes `memo` field.
     *   `ReentrancyGuard` on release and refund functions.
     *   `Ownable2Step` for admin controls only.
     *   `Pausable` - only blocks `createEscrow`. Other functions always unpausable.
 *   [ ] **1.5. Monad Network Integrations (MIP-3 & MIP-4):**
     *   **MIP-3 (Linear Memory):** Structure proof handling using Reclaim Solidity Verifier SDK. No string parsing.
     *   **MIP-4 (Reserve Balance Introspection):** Check address `0x1001` via `dippedIntoReserve()` before proof verification.
-*   [ ] **1.6. Unit Testing:** Standard flow (fund -> markAsPaid -> verify -> release), timeout refund from Funded, timeout refund from AwaitingProof, replay attack (same proof twice fails), wrong escrow context (proof bound to different escrow fails), wrong contract address (proof from different contract fails), invalid proof, reentrancy, pause only blocks new escrows.
+*   [ ] **1.6. Unit Testing:** Standard flow (fund -> markAsPaid -> verify -> release), timeout refund from Funded, timeout refund from AwaitingProof, replay attack (same claim identifier twice fails), wrong context hash, wrong memo (old receipt without paymentRef fails), invalid proof, reentrancy, pause only blocks new escrows.
 *   [ ] **1.7. Testnet Deployment:** Deploy to Monad Testnet, verify source code.
 
 ---
@@ -57,9 +58,10 @@ gantt
 *   [ ] **2.2. Configure HTTP Provider (Stripe Focus):**
     *   Target Stripe payment receipt pages for MVP.
     *   Map `parametersHash` from the Reclaim proof output.
-    *   Configure context fields to include `escrowId` and `contractAddress` for proof binding.
-*   [ ] **2.3. Signature Verification Tests:** Validate proof construction locally. Confirm `parametersHash` matches the JSON constructed via `abi.encodePacked`. Confirm context fields contain escrowId and contractAddress.
-*   [ ] **2.4. No on-chain string parsing:** Verification uses `abi.encodePacked` for JSON construction, then hash comparison. No `extractFieldFromContext` for payment fields on-chain.
+    *   Include `description` field from Stripe receipt in parameters (this will contain the `paymentRef` memo).
+    *   Configure context string as `escrowId:contractAddress` for proof binding.
+*   [ ] **2.3. Signature Verification Tests:** Validate proof construction locally. Confirm `parametersHash` matches the JSON constructed via `abi.encodePacked` including the memo field. Confirm context hash matches `keccak256(escrowId + ":" + contractAddress)`.
+*   [ ] **2.4. No on-chain string parsing:** Verification uses `abi.encodePacked` for context and JSON construction, then hash comparison. No `extractFieldFromContext` anywhere on-chain.
 
 ---
 
@@ -70,9 +72,9 @@ gantt
 *   [ ] **3.2. Neo-Banking UI:** Light-mode, high-contrast, mobile-first. No neon gradients or Web3 tropes.
 *   [ ] **3.3. Wagmi/RainbowKit Setup:** Monad Network (Chain ID `10143`).
 *   [ ] **3.4. Features:**
-    *   **Create Escrow:** Single form - seller enters buyer address, fiat amount, recipient details, reference. Locks crypto in one click.
+    *   **Create Escrow:** Single form - seller enters buyer address, fiat amount, recipient details, reference. Displays the auto-generated `paymentRef` after creation.
     *   **Mark as Paid:** Buyer button that calls `markAsPaid` before sending fiat.
-    *   **Proof Generator:** Reclaim QR code for buyers.
+    *   **Proof Generator:** Reclaim QR code for buyers. Displays the `paymentRef` that buyer must include in Stripe payment description.
     *   **State Tracker:** Listens to `EscrowFunded`, `PaymentMarked`, `FiatVerified`, `EscrowRefunded` events.
 
 ---
@@ -81,7 +83,7 @@ gantt
 **Objective:** Bind components, debug, and optimize.
 
 *   [ ] **4.1. E2E Wiring:** Connect frontend to contract methods.
-*   [ ] **4.2. Full Flow Tests:** Create escrow -> markAsPaid -> generate proof -> verify -> release. Also test timeout refund from both Funded and AwaitingProof states.
+*   [ ] **4.2. Full Flow Tests:** Create escrow -> markAsPaid -> send fiat with paymentRef in memo -> generate proof -> verify -> release. Also test timeout refund from both Funded and AwaitingProof states. Test replay attack. Test old receipt reuse.
 *   [ ] **4.3. Debugging & Gas Optimization:** Fix async execution errors, RPC issues, edge cases.
 *   [ ] **4.4. UI Audit:** No placeholder data, no hardcoded stats, every button triggers real on-chain state changes.
 
