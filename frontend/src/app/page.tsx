@@ -1,8 +1,23 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) {
+    return (
+      <div className="flex flex-col flex-1 items-center bg-white min-h-screen">
+        <header className="w-full flex items-center justify-between px-6 py-4 border-b border-zinc-200">
+          <h1 className="text-xl font-semibold text-zinc-900">AegisP2P</h1>
+          <div className="h-10 w-32 rounded-full bg-zinc-100 animate-pulse" />
+        </header>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col flex-1 items-center bg-white min-h-screen">
       <header className="w-full flex items-center justify-between px-6 py-4 border-b border-zinc-200">
