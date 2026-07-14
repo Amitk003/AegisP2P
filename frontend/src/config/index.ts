@@ -1,8 +1,7 @@
-import { http, createConfig } from "wagmi";
-import { monadTestnet } from "wagmi/chains";
+import { getDefaultConfig } from "@rainbow-me/rainbowkit";
+import { http, createConfig, injected } from "wagmi";
 
 export const monadChain = {
-  ...monadTestnet,
   id: 10143,
   name: "Monad Testnet",
   nativeCurrency: { name: "MON", symbol: "MON", decimals: 18 },
@@ -13,12 +12,25 @@ export const monadChain = {
   blockExplorers: {
     default: { name: "MonadScan", url: "https://testnet.monad.xyz" },
   },
-};
+} as const;
 
-export const config = createConfig({
-  chains: [monadChain],
-  transports: {
-    [monadChain.id]: http(),
-  },
-  ssr: true,
-});
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
+
+export const config = projectId
+  ? getDefaultConfig({
+      appName: "AegisP2P",
+      projectId,
+      chains: [monadChain],
+      transports: {
+        [monadChain.id]: http(),
+      },
+      ssr: true,
+    })
+  : createConfig({
+      chains: [monadChain],
+      connectors: [injected()],
+      transports: {
+        [monadChain.id]: http(),
+      },
+      ssr: true,
+    });
