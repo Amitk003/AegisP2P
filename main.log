@@ -42,3 +42,13 @@ main log - AegisP2P
 [2026-07-14 16:00] - Updated docs/contracts.md (correct SDK paths, string conversion, params hash)
 [2026-07-14 16:00] - Updated docs/architecture.md (correct SDK field references)
 [2026-07-14 16:00] - Updated ROADMAP.md (aligned with SDK struct reality)
+[2026-07-14 16:17] - Merged docs-setup into main, created main branch
+[2026-07-14 16:17] - Created contract-scaffold branch
+[2026-07-14 16:17] - Initialized contracts/ directory as Hardhat v2 project
+[2026-07-14 16:17] - Installed: hardhat, @nomicfoundation/hardhat-toolbox, @openzeppelin/contracts, dotenv
+[2026-07-14 16:17] - Uninstalled: hardhat v3 (incompatible with toolbox)
+[2026-07-14 16:17] - Created hardhat.config.js (Monad testnet/mainnet networks, Solidity 0.8.26, evm cancun)
+[2026-07-14 16:17] - Created .env.example
+[2026-07-14 16:17] - Created AegisEscrow.sol skeleton (struct, events, function signatures)
+[2026-07-14 16:17] - Created scripts/deploy.js
+[2026-07-14 16:17] - Compilation successful (13 files, evm target: cancun)
