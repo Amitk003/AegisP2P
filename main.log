@@ -28,3 +28,10 @@ main log - AegisP2P
 [2026-07-14 15:31] - Updated docs/contracts.md (replay protection, JSON construction, markAsPaid)
 [2026-07-14 15:31] - Updated docs/architecture.md (flow and 4-state diagram updated)
 [2026-07-14 15:31] - Updated ROADMAP.md (tasks aligned with new fixes)
+[2026-07-14 15:45] - Principal engineer review round 3: 3 issues
+  - Point 1: Context still parsed via extractFieldFromContext - FIXED: now uses hash comparison of constructed context string
+  - Point 2: Wrong Reclaim SDK struct (proof.claimId) - FIXED: now uses proof.signedClaim.claim.identifier
+  - Point 3: Unrelated receipt attack - FIXED: paymentRef auto-generated per escrow, included in Stripe memo, verified in JSON hash
+[2026-07-14 15:45] - Updated docs/contracts.md (context hash comparison, correct SDK fields, payment binding via memo)
+[2026-07-14 15:45] - Updated docs/architecture.md (updated flow with paymentRef, context hash)
+[2026-07-14 15:45] - Updated ROADMAP.md (aligned tasks with all 3 fixes)
