@@ -36,9 +36,9 @@ Each escrow goes through these states:
 - Buyer submits a Reclaim zk proof of fiat payment
 - Steps:
   1. Check proof has not been used before via `usedClaims[proof.signedClaim.claim.identifier]`
-  2. Check proof context binds to this escrow by constructing expected context and comparing hash: `keccak256(abi.encodePacked(escrowId, ":", address(this))) == keccak256(proof.signedClaim.claimInfo.context)`. Zero string parsing.
+  2. Check proof context binds to this escrow by converting values to strings first, then comparing hash: `keccak256(abi.encodePacked(Strings.toString(escrowId), ":", Strings.toHexString(address(this)))) == keccak256(abi.encodePacked(proof.claimInfo.context))`. Zero string parsing. Must use `Strings.toString` and `Strings.toHexString` from OpenZeppelin because `abi.encodePacked` with raw uint/address produces binary bytes that won't match the ASCII context string.
   3. Construct expected JSON string from stored escrow fields including the `paymentRef` as memo: `abi.encodePacked('{"amount":"', amount, '","recipient":"', recipient, '","reference":"', reference, '","memo":"', paymentRef, '"}')`
-  4. Check `keccak256(expectedJson) == proof.parametersHash`
+  4. Check `keccak256(abi.encodePacked(expectedJson)) == keccak256(abi.encodePacked(proof.claimInfo.parameters))`. No pre-computed `parametersHash` in the SDK - compute the hash of the raw parameters string directly.
   5. Mark `usedClaims[proof.signedClaim.claim.identifier] = true`
   6. Use MIP-4 reserve balance check before proof verification
   7. Verify the zk proof via Reclaim SDK
@@ -61,7 +61,7 @@ Each escrow goes through these states:
 ### Security Features
 
 - **Replay Protection:** `mapping(bytes32 => bool) public usedClaims` prevents reusing the same Reclaim claim across multiple escrows. Uses `proof.signedClaim.claim.identifier` as the unique claim ID.
-- **Context Binding (no string parsing):** Context is a predictable string `"escrowId:contractAddress"`. Contract constructs `abi.encodePacked(escrowId, ":", address(this))` and compares its hash to `keccak256(proof.signedClaim.claimInfo.context)`. Zero string parsing.
+- **Context Binding (no string parsing):** Context is a predictable string `"escrowId:contractAddress"`. Contract converts `escrowId` and `address(this)` to strings first using `Strings.toString` and `Strings.toHexString`, then constructs `abi.encodePacked(stringEscrowId, ":", stringAddress)` and compares its hash to `keccak256(abi.encodePacked(proof.claimInfo.context))`. Zero string parsing. Raw binary comparison would fail because context is an ASCII string.
 - **Payment Binding via Memo:** The payment receipt must include the `paymentRef` in the Stripe description/memo field. This is included in the parameters JSON. Old receipts without the correct `paymentRef` will not match. Prevents unrelated receipt reuse.
 - **ReentrancyGuard** - Prevents reentrancy attacks on release and refund
 - **Ownable2Step** - Admin controls for `pauseNewEscrows()` only
@@ -84,9 +84,9 @@ Disputes need human arbiters and multisigs, which adds trust back into the syste
 4. Buyer generates Reclaim proof of the Stripe receipt on their phone.
 5. Buyer submits proof to `verifyFiatAndRelease`.
 6. Contract checks `usedClaims[proof.signedClaim.claim.identifier]` to prevent replay.
-7. Contract constructs expected context `abi.encodePacked(escrowId, ":", address(this))` and compares its hash to the proof's context hash. No `extractFieldFromContext` needed.
+7. Contract converts `escrowId` to string via `Strings.toString` and `address(this)` to string via `Strings.toHexString`, constructs `abi.encodePacked(stringEscrowId, ":", stringAddress)` and compares its hash to `keccak256(abi.encodePacked(proof.claimInfo.context))`. No `extractFieldFromContext` needed.
 8. Contract builds expected JSON string from stored fields including memo: `abi.encodePacked('{"amount":"...","recipient":"...","reference":"...","memo":"..."}')`.
-9. Contract compares `keccak256(expectedJson)` against `proof.parametersHash`.
+9. Contract computes `keccak256(abi.encodePacked(expectedJson))` and compares against `keccak256(abi.encodePacked(proof.claimInfo.parameters))`. No pre-computed `parametersHash` in the SDK - hash the raw parameters string directly.
 10. Contract marks claim as used.
 11. Contract verifies the zk proof via Reclaim SDK.
 12. Crypto is released to buyer.
