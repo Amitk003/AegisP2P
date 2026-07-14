@@ -21,3 +21,10 @@ main log - AegisP2P
 [2026-07-14 15:15] - Updated docs/contracts.md (engineer feedback applied)
 [2026-07-14 15:15] - Updated docs/architecture.md (flow and state diagram updated)
 [2026-07-14 15:15] - Updated ROADMAP.md (tasks aligned with new design)
+[2026-07-14 15:30] - Principal engineer review round 2: 3 security issues identified
+  - Point 1: Replay attack - added usedClaims mapping and proof-to-escrow binding via context fields
+  - Point 2: JSON vs ABI hash mismatch - now stores raw fields, constructs expected JSON via abi.encodePacked on-chain
+  - Point 3: Front-running on refunds - added markAsPaid() function, 4-state machine (Funded -> AwaitingProof -> Verified | Refunded)
+[2026-07-14 15:31] - Updated docs/contracts.md (replay protection, JSON construction, markAsPaid)
+[2026-07-14 15:31] - Updated docs/architecture.md (flow and 4-state diagram updated)
+[2026-07-14 15:31] - Updated ROADMAP.md (tasks aligned with new fixes)
