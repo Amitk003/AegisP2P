@@ -35,3 +35,10 @@ main log - AegisP2P
 [2026-07-14 15:45] - Updated docs/contracts.md (context hash comparison, correct SDK fields, payment binding via memo)
 [2026-07-14 15:45] - Updated docs/architecture.md (updated flow with paymentRef, context hash)
 [2026-07-14 15:45] - Updated ROADMAP.md (aligned tasks with all 3 fixes)
+[2026-07-14 16:00] - Principal engineer review round 4: 3 fixes
+  - Point 1: proof.signedClaim.claimInfo.context -> proof.claimInfo.context (claimInfo is direct on Proof struct)
+  - Point 2: Binary vs ASCII string hashing - now uses Strings.toString/Strings.toHexString before abi.encodePacked
+  - Point 3: No parametersHash in SDK - now computes keccak256(proof.claimInfo.parameters) directly
+[2026-07-14 16:00] - Updated docs/contracts.md (correct SDK paths, string conversion, params hash)
+[2026-07-14 16:00] - Updated docs/architecture.md (correct SDK field references)
+[2026-07-14 16:00] - Updated ROADMAP.md (aligned with SDK struct reality)
