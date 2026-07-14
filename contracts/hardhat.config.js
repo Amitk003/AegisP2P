@@ -29,15 +29,15 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
-      monadMainnet: process.env.BLOCK_EXPLORER_API_KEY || "",
+      monadTestnet: process.env.BLOCK_EXPLORER_API_KEY || "",
     },
     customChains: [
       {
-        network: "monadMainnet",
+        network: "monadTestnet",
         chainId: 10143,
         urls: {
-          apiURL: "https://monad-explorer.api.com/api",
-          browserURL: "https://monad-explorer.com",
+          apiURL: "https://testnet.monad.xyz/api",
+          browserURL: "https://testnet.monad.xyz",
         },
       },
     ],
