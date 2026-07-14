@@ -1,7 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { Header } from "@/components/layout/Header";
+import { CreateEscrowForm } from "@/components/escrow/CreateEscrowForm";
+import { EscrowList } from "@/components/escrow/EscrowList";
+import { EscrowData } from "@/types/escrow";
+
+const MOCK_ESCOW: EscrowData = {
+  escrowId: 0,
+  seller: "0x1234567890abcdef1234567890abcdef12345678",
+  buyer: "0xabcdef1234567890abcdef1234567890abcdef12",
+  amount: BigInt("1000000000000000000"),
+  fiatAmount: "100.00",
+  recipient: "seller@stripe",
+  refId: "INV-001",
+  paymentRef: "aegis-0",
+  state: 0,
+  createdAt: Math.floor(Date.now() / 1000) - 3000,
+  paidAt: 0,
+};
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -10,46 +27,33 @@ export default function Home() {
   if (!mounted) {
     return (
       <div className="flex flex-col flex-1 items-center bg-white min-h-screen">
-        <header className="w-full flex items-center justify-between px-6 py-4 border-b border-zinc-200">
-          <h1 className="text-xl font-semibold text-zinc-900">AegisP2P</h1>
-          <div className="h-10 w-32 rounded-full bg-zinc-100 animate-pulse" />
-        </header>
+        <Header />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col flex-1 items-center bg-white min-h-screen">
-      <header className="w-full flex items-center justify-between px-6 py-4 border-b border-zinc-200">
-        <h1 className="text-xl font-semibold text-zinc-900">AegisP2P</h1>
-        <ConnectButton />
-      </header>
+    <div className="flex flex-col flex-1 items-center bg-zinc-50 min-h-screen">
+      <Header />
 
-      <main className="flex flex-1 flex-col items-center justify-center w-full max-w-2xl px-6 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-semibold text-zinc-900 mb-3">
-            Secure P2P Escrow
-          </h2>
-          <p className="text-zinc-600 text-lg">
-            ZK-verified fiat payments on Monad
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
-          <div className="rounded-xl border border-zinc-200 p-6 text-center">
-            <h3 className="font-medium text-zinc-900 mb-2">Sell Crypto</h3>
-            <p className="text-sm text-zinc-500 mb-4">
-              Lock your crypto in escrow and receive fiat safely
-            </p>
-            <span className="text-xs text-zinc-400">Connect wallet to start</span>
+      <main className="w-full max-w-5xl px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1">
+            <h2 className="text-lg font-semibold text-zinc-900 mb-4">
+              New Escrow
+            </h2>
+            <CreateEscrowForm
+              onSubmit={(data) => {
+                console.log("Create escrow:", data);
+              }}
+            />
           </div>
 
-          <div className="rounded-xl border border-zinc-200 p-6 text-center">
-            <h3 className="font-medium text-zinc-900 mb-2">Buy Crypto</h3>
-            <p className="text-sm text-zinc-500 mb-4">
-              Pay with fiat and get your crypto released instantly
-            </p>
-            <span className="text-xs text-zinc-400">Connect wallet to start</span>
+          <div className="lg:col-span-2">
+            <h2 className="text-lg font-semibold text-zinc-900 mb-4">
+              Active Escrows
+            </h2>
+            <EscrowList escrows={[MOCK_ESCOW]} />
           </div>
         </div>
       </main>
