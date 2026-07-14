@@ -32,7 +32,7 @@ export function useEscrows() {
   const [escrows, setEscrows] = useState<EscrowData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const { data: nextEscrowIdResult } = useReadContracts({
+  const { data: nextEscrowIdResult, isLoading: isNextIdLoading } = useReadContracts({
     contracts: [
       {
         address: ESCROW_ADDRESS,
@@ -58,16 +58,20 @@ export function useEscrows() {
   });
 
   useEffect(() => {
-    if (!escrowResults) return;
+    if (isNextIdLoading) return;
+    if (!loading) return;
+    if (!escrowResults && escrowReads.length > 0) return;
     const parsed: EscrowData[] = [];
-    for (let i = 0; i < escrowResults.length; i++) {
-      const result = escrowResults[i].result;
-      const e = parseEscrow(result, i);
-      if (e) parsed.push(e);
+    if (escrowResults) {
+      for (let i = 0; i < escrowResults.length; i++) {
+        const result = escrowResults[i].result;
+        const e = parseEscrow(result, i);
+        if (e) parsed.push(e);
+      }
     }
     setEscrows(parsed);
     setLoading(false);
-  }, [escrowResults]);
+  }, [escrowResults, escrowReads.length, isNextIdLoading, loading]);
 
   const updateEscrow = useCallback((escrowId: number, updater: (e: EscrowData) => EscrowData) => {
     setEscrows((prev) => prev.map((e) => (e.escrowId === escrowId ? updater(e) : e)));
