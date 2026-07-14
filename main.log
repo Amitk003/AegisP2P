@@ -63,3 +63,13 @@ main log - AegisP2P
   - Replaced redundant abi.encodePacked wraps in keccak256 with direct bytes() casts (saving gas)
   - Enforced strict reclaimVerifier check (revert if address is 0) to eliminate silent validation skips
   - Split and cleaned up replay test suite to separate state-transition asserts from actual usedClaims double-spend defenses
+[2026-07-14 16:50] - Created frontend-scaffold branch from main
+[2026-07-14 16:50] - Created Next.js 16 App Router project with TypeScript and Tailwind
+[2026-07-14 16:50] - Installed: wagmi 3.x, viem, @rainbow-me/rainbowkit, @reclaimprotocol/reclaim-sdk
+[2026-07-14 16:50] - Created src/config/index.ts (Monad chain config for Wagmi)
+[2026-07-14 16:50] - Created src/app/providers.tsx (Wagmi + RainbowKit + React Query providers)
+[2026-07-14 16:50] - Updated layout.tsx with Providers wrapper
+[2026-07-14 16:50] - Created landing page with wallet connection and sell/buy cards
+[2026-07-14 16:50] - Created .env.local.example
+[2026-07-14 16:50] - Updated docs/setup.md with frontend setup instructions
+[2026-07-14 16:50] - Build successful
