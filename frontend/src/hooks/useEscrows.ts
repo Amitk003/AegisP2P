@@ -6,26 +6,25 @@ import { AEGIS_ESCROW_ABI, ESCROW_ADDRESS } from "@/lib/contract";
 import { EscrowData, EscrowState } from "@/types/escrow";
 
 function parseEscrow(raw: unknown, escrowId: number): EscrowData | null {
-  if (!raw || typeof raw !== "object") return null;
-  const r = raw as Record<string, unknown>;
-  const exists = r.exists as boolean;
+  if (!Array.isArray(raw) || raw.length < 11) return null;
+  const exists = raw[10] as boolean;
   if (!exists) return null;
 
-  const stateValue = Number(r.state);
+  const stateValue = raw[7] as number;
   const state = stateValue >= 0 && stateValue <= 3 ? (stateValue as EscrowState) : EscrowState.Funded;
 
   return {
     escrowId,
-    seller: r.seller as string,
-    buyer: r.buyer as string,
-    amount: BigInt(r.amount as string),
-    fiatAmount: r.fiatAmount as string,
-    recipient: r.recipient as string,
-    refId: r.refId as string,
-    paymentRef: r.paymentRef as string,
+    seller: raw[0] as string,
+    buyer: raw[1] as string,
+    amount: raw[2] as bigint,
+    fiatAmount: raw[3] as string,
+    recipient: raw[4] as string,
+    refId: raw[5] as string,
+    paymentRef: raw[6] as string,
     state,
-    createdAt: Number(r.createdAt),
-    paidAt: Number(r.paidAt),
+    createdAt: Number(raw[8]),
+    paidAt: Number(raw[9]),
   };
 }
 
