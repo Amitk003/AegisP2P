@@ -12,6 +12,7 @@ interface EscrowCardProps {
   onMarkAsPaid?: (escrowId: number) => void;
   onVerify?: (escrowId: number) => void;
   onRefund?: (escrowId: number) => void;
+  disabled?: boolean;
 }
 
 export function EscrowCard({
@@ -19,6 +20,7 @@ export function EscrowCard({
   onMarkAsPaid,
   onVerify,
   onRefund,
+  disabled,
 }: EscrowCardProps) {
   const [isRefundable, setIsRefundable] = useState(false);
 
@@ -108,7 +110,12 @@ export function EscrowCard({
         {isBuyerAction && (
           <button
             onClick={() => onMarkAsPaid(escrow.escrowId)}
-            className="flex-1 rounded-lg bg-blue-600 text-white text-sm font-medium py-2 hover:bg-blue-700 transition-colors"
+            disabled={disabled}
+            className={`flex-1 rounded-lg text-sm font-medium py-2 transition-colors ${
+              disabled
+                ? "bg-blue-300 text-white cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            }`}
           >
             Mark as Paid
           </button>
@@ -116,7 +123,12 @@ export function EscrowCard({
         {isVerifyAction && (
           <button
             onClick={() => onVerify(escrow.escrowId)}
-            className="flex-1 rounded-lg bg-emerald-600 text-white text-sm font-medium py-2 hover:bg-emerald-700 transition-colors"
+            disabled={disabled}
+            className={`flex-1 rounded-lg text-sm font-medium py-2 transition-colors ${
+              disabled
+                ? "bg-emerald-300 text-white cursor-not-allowed"
+                : "bg-emerald-600 text-white hover:bg-emerald-700"
+            }`}
           >
             Verify & Release
           </button>
@@ -124,11 +136,11 @@ export function EscrowCard({
         {isRefundAction && (
           <button
             onClick={() => onRefund(escrow.escrowId)}
-            disabled={!isRefundable}
+            disabled={disabled || !isRefundable}
             className={`flex-1 rounded-lg border text-sm font-medium py-2 transition-colors ${
-              isRefundable
-                ? "border-zinc-300 text-zinc-700 hover:bg-zinc-50"
-                : "border-zinc-200 text-zinc-400 cursor-not-allowed"
+              disabled || !isRefundable
+                ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
+                : "border-zinc-300 text-zinc-700 hover:bg-zinc-50"
             }`}
           >
             Refund
