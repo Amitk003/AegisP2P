@@ -48,6 +48,18 @@ npx hardhat test
 ```
 cd frontend
 npm install
+```
+
+Create a `.env.local` file in the `frontend` folder:
+
+```
+NEXT_PUBLIC_MONAD_RPC=https://testnet-rpc.monad.xyz
+NEXT_PUBLIC_ESCROW_CONTRACT_ADDRESS=deployed_contract_address_here
+```
+
+Run the dev server:
+
+```
 npm run dev
 ```
 
@@ -55,7 +67,7 @@ Open http://localhost:3000 in your browser.
 
 ## Step 4: Environment Variables
 
-Copy `.env.example` to `.env` in both `contracts/` and `frontend/` folders and fill in the values.
+Copy `.env.example` to `.env` in the `contracts/` folder and `.env.local.example` to `.env.local` in the `frontend/` folder. Fill in the values.
 
 ## Important Notes
 
