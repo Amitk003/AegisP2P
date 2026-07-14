@@ -15,24 +15,30 @@ Seller                    Frontend                      Smart Contract          
   |                          |                               |                      |
   |-- Create + Lock -------->|-- createEscrow() ------------>|                      |
   |   (payable)              |   (amount,recipient,ref)      |-- Escrow Funded      |
+  |                          |                               |   (paymentRef gen)   |
   |                          |                               |                      |
-  |                          |<--- QR for Reclaim -----------|----------------------|
+  |                          |<--- paymentRef + QR for  -----|----------------------|
+  |                          |     Reclaim                    |                      |
   |                          |                               |                      |
   |                          |                               |<-- markAsPaid() -----|
   |                          |                               |   (before sending)   |
   |                          |                               |-- AwaitingProof      |
   |                          |                               |                      |
   |                          |                               |  Buyer sends fiat    |
-  |<-- Fiat received --------|                               |  to seller's bank    |
+  |<-- Fiat received --------|                               |  via Stripe, includes|
+  |                          |                               |  paymentRef in memo  |
   |                          |                               |                      |
   |                          |                               |<-- verifyFiatAnd---  |
   |                          |                               |    Release(proof)    |
   |                          |                               |                      |
   |                          |                               |-- Check usedClaims   |
-  |                          |                               |-- Check context      |
-  |                          |                               |   (escrowId, addr)   |
+  |                          |                               |   (signedClaim.claim |
+  |                          |                               |    .identifier)      |
+  |                          |                               |-- Build context hash |
+  |                          |                               |   escrowId:contract  |
   |                          |                               |-- Build expected JSON|
-  |                          |                               |-- Hash compare       |
+  |                          |                               |   (includes memo=    |
+  |                          |                               |    paymentRef)       |
   |                          |                               |-- Verify zk proof    |
   |                          |                               |-- Release crypto    |
   |                          |<--- Crypto released ----------|----------------------|
@@ -65,22 +71,24 @@ Seller                    Frontend                      Smart Contract          
 
 ### Smart Contract (AegisEscrow.sol)
 - Holds crypto funds safely
+- Generates unique `paymentRef` per escrow for payment binding
 - Buyer calls `markAsPaid` before sending fiat to prevent front-running
-- Constructs expected JSON from stored fields using `abi.encodePacked`
+- Constructs expected context `escrowId:contractAddress` and compares hash (no string parsing)
+- Constructs expected JSON from stored fields including `paymentRef` as memo using `abi.encodePacked`
 - Compares hash of constructed JSON against Reclaim proof's parametersHash
-- Prevents replay attacks with `usedClaims` mapping
-- Binds proof to specific escrow via context fields (escrowId, contractAddress)
+- Prevents replay attacks with `usedClaims` using `proof.signedClaim.claim.identifier`
 - Uses Monad MIP-3 for cheaper proof verification
 - Uses Monad MIP-4 to check gas reserve before heavy computation
 
 ### Reclaim Protocol
-- Captures HTTPS traffic from bank/Stripe websites
+- Captures HTTPS traffic from Stripe receipt pages
 - Creates a zero-knowledge proof that the payment happened
 - Does not expose user passwords or bank details
-- Context fields embed escrowId and contractAddress for binding
-- Provides a `parametersHash` of the fiat transaction details
+- Context field contains `escrowId:contractAddress` for binding (compared via hash)
+- Parameters include `amount`, `recipient`, `reference`, and `memo` (the paymentRef)
+- Provides a `parametersHash` that the contract compares against expected values
 
 ### Frontend
 - Seller dashboard: create escrow with one click
-- Buyer dashboard: mark as paid, generate Reclaim proof, verify and claim crypto
+- Buyer dashboard: mark as paid, generate Reclaim proof using provided paymentRef, verify and claim crypto
 - Shows real-time status of escrows via event listeners
