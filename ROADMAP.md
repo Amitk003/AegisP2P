@@ -31,14 +31,14 @@ gantt
 *   [ ] **1.2. Core Escrow Contract (AegisEscrow.sol):**
     *   `createEscrow(buyer, amount, recipient, reference)` - payable function. Stores raw fields, auto-generates `paymentRef`.
     *   `markAsPaid(escrowId)` - buyer locks escrow before sending fiat. Starts 2hr proof timer. Prevents front-running on refund.
-    *   `verifyFiatAndRelease(escrowId, proof)` - replay protection via `usedClaims[proof.signedClaim.claim.identifier]`, context binding via hash comparison (construct `escrowId:contractAddress`, no string parsing), expected JSON construction via `abi.encodePacked` (includes `memo` = `paymentRef`), hash comparison, then zk verification.
+     *   `verifyFiatAndRelease(escrowId, proof)` - replay protection via `usedClaims[proof.signedClaim.claim.identifier]`, context binding via hash comparison (convert to strings via `Strings.toString`/`Strings.toHexString` first, then compare against `proof.claimInfo.context`), expected JSON construction via `abi.encodePacked` (includes `memo` = `paymentRef`), hash comparison against `proof.claimInfo.parameters`, then zk verification.
     *   `refund(escrowId)` - timeout based. 2hr from `createEscrow` if still in `Funded`. 2hr from `markAsPaid` if in `AwaitingProof`.
     *   Escrow states: `Funded` -> `AwaitingProof` -> `Verified` | `Refunded`.
 *   [ ] **1.3. Define On-Chain Events:**
     *   Events: `EscrowFunded`, `PaymentMarked`, `FiatVerified`, `EscrowRefunded`.
 *   [ ] **1.4. Security:**
     *   `mapping(bytes32 => bool) public usedClaims` using `proof.signedClaim.claim.identifier`.
-    *   Context binding via hash comparison: `keccak256(abi.encodePacked(escrowId, ":", address(this))) == keccak256(proof.signedClaim.claimInfo.context)`. No `extractFieldFromContext`.
+     *   Context binding via hash comparison: convert to strings first via `Strings.toString` and `Strings.toHexString`, then `keccak256(abi.encodePacked(stringEscrowId, ":", stringAddress)) == keccak256(abi.encodePacked(proof.claimInfo.context))`. No `extractFieldFromContext`. Raw binary comparison would fail because context is ASCII string.
     *   Payment binding via memo: buyer must include `paymentRef` in Stripe payment description. Parameters JSON includes `memo` field.
     *   `ReentrancyGuard` on release and refund functions.
     *   `Ownable2Step` for admin controls only.
@@ -57,10 +57,10 @@ gantt
 *   [ ] **2.1. Developer Setup:** Register app on Reclaim Developer Portal, get `APP_ID` and `APP_SECRET`.
 *   [ ] **2.2. Configure HTTP Provider (Stripe Focus):**
     *   Target Stripe payment receipt pages for MVP.
-    *   Map `parametersHash` from the Reclaim proof output.
-    *   Include `description` field from Stripe receipt in parameters (this will contain the `paymentRef` memo).
-    *   Configure context string as `escrowId:contractAddress` for proof binding.
-*   [ ] **2.3. Signature Verification Tests:** Validate proof construction locally. Confirm `parametersHash` matches the JSON constructed via `abi.encodePacked` including the memo field. Confirm context hash matches `keccak256(escrowId + ":" + contractAddress)`.
+     *   Extract `claimInfo.parameters` (raw parameters string) and `claimInfo.context` from the Reclaim proof.
+     *   Include `description` field from Stripe receipt in parameters (this will contain the `paymentRef` memo).
+     *   Configure context string as `escrowId:contractAddress` for proof binding.
+*   [ ] **2.3. Signature Verification Tests:** Validate proof construction locally. Confirm `keccak256(abi.encodePacked(expectedJson))` matches `keccak256(abi.encodePacked(proof.claimInfo.parameters))`. Confirm context hash matches `keccak256(abi.encodePacked(Strings.toString(escrowId) + ":" + Strings.toHexString(contractAddress)))`.
 *   [ ] **2.4. No on-chain string parsing:** Verification uses `abi.encodePacked` for context and JSON construction, then hash comparison. No `extractFieldFromContext` anywhere on-chain.
 
 ---
