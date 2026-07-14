@@ -11,11 +11,12 @@
   "dependencies": {
     "@rainbow-me/rainbowkit": "^2.2.11",
     "@reclaimprotocol/reclaim-sdk": "^6.0.0",
+    "@walletconnect/ethereum-provider": "^2.23.10",
     "next": "16.2.10",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "viem": "^2.55.2",
-    "wagmi": "^3.7.1"
+    "wagmi": "^2.19.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
