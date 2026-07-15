@@ -10,9 +10,11 @@ export const monadChain = {
     public: { http: ["https://testnet-rpc.monad.xyz"] },
   },
   blockExplorers: {
-    default: { name: "MonadScan", url: "https://testnet.monad.xyz" },
+    default: { name: "Monad Explorer", url: "https://testnet.monadexplorer.com" },
   },
 } as const;
+
+export const BLOCK_EXPLORER_URL = monadChain.blockExplorers.default.url;
 
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
 

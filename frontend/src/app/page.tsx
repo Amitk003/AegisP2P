@@ -6,15 +6,10 @@ import { Header } from "@/components/layout/Header";
 import { CreateEscrowForm } from "@/components/escrow/CreateEscrowForm";
 import { EscrowList } from "@/components/escrow/EscrowList";
 import { useEscrows } from "@/hooks/useEscrows";
-import {
-  useCreateEscrow,
-  useMarkAsPaid,
-  useVerifyRelease,
-  useRefundEscrow,
-} from "@/hooks/useContractActions";
-import { ESCROW_ADDRESS } from "@/lib/contract";
-import { buildDemoProof } from "@/lib/demoProof";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { useCreateEscrow } from "@/hooks/useCreateEscrow";
+import { useMarkPaid } from "@/hooks/useMarkPaid";
+import { useVerifyRelease } from "@/hooks/useVerifyRelease";
+import { useRefund } from "@/hooks/useRefund";
 
 type Toast = { message: string; type: "success" | "error" } | null;
 
@@ -39,9 +34,9 @@ export default function Home() {
   const { address, isConnected } = useAccount();
   const { escrows, loading } = useEscrows();
   const { createEscrow, isPending: isCreating } = useCreateEscrow();
-  const { markAsPaid, isPending: isMarking } = useMarkAsPaid();
+  const { markAsPaid, isPending: isMarking } = useMarkPaid();
   const { verifyRelease, isPending: isVerifying } = useVerifyRelease();
-  const { refund, isPending: isRefunding } = useRefundEscrow();
+  const { refund, isPending: isRefunding } = useRefund();
 
   async function handleCreate(data: {
     buyer: string;
@@ -77,15 +72,7 @@ export default function Home() {
         showToast("Escrow data not found", "error");
         return;
       }
-      const proof = await buildDemoProof(
-        escrowId,
-        ESCROW_ADDRESS,
-        escrow.fiatAmount,
-        escrow.recipient,
-        escrow.refId,
-        escrow.paymentRef
-      );
-      await verifyRelease(escrowId, proof);
+      await verifyRelease(escrowId, escrow);
       showToast(`Funds released!`, "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Verify & release failed", "error");
