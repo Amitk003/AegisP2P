@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAccount } from "wagmi";
 import { Header } from "@/components/layout/Header";
 import { CreateEscrowForm } from "@/components/escrow/CreateEscrowForm";
@@ -12,11 +12,26 @@ import {
   useVerifyRelease,
   useRefundEscrow,
 } from "@/hooks/useContractActions";
+import { ESCROW_ADDRESS } from "@/lib/contract";
+import { buildDemoProof } from "@/lib/demoProof";
 import { EscrowData } from "@/types/escrow";
+
+type Toast = { message: string; type: "success" | "error" } | null;
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
+  const [toast, setToast] = useState<Toast>(null);
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  const showToast = useCallback((message: string, type: "success" | "error") => {
+    setToast({ message, type });
+  }, []);
 
   const { address, isConnected } = useAccount();
   const { escrows, loading } = useEscrows();
@@ -33,36 +48,50 @@ export default function Home() {
     refId: string;
   }) {
     try {
-      await createEscrow(data.buyer, data.cryptoAmount, data.fiatAmount, data.recipient, data.refId);
+      const tx = await createEscrow(data.buyer, data.cryptoAmount, data.fiatAmount, data.recipient, data.refId);
+      showToast(`Escrow created! Tx: ${tx.slice(0, 10)}...`, "success");
     } catch (err) {
-      console.error("Create escrow failed:", err);
+      showToast(err instanceof Error ? err.message : "Create escrow failed", "error");
     }
   }
 
   async function handleMarkAsPaid(escrowId: number) {
     try {
-      await markAsPaid(escrowId);
+      const tx = await markAsPaid(escrowId);
+      showToast(`Payment marked! Tx: ${tx.slice(0, 10)}...`, "success");
     } catch (err) {
-      console.error("Mark as paid failed:", err);
+      showToast(err instanceof Error ? err.message : "Mark as paid failed", "error");
     }
   }
 
   async function handleVerify(escrowId: number) {
     try {
-      const proof = prompt("Paste ABI-encoded proof (hex):") as `0x${string}`;
-      if (proof) {
-        await verifyRelease(escrowId, proof);
+      const escrow = escrows.find((e) => e.escrowId === escrowId);
+      if (!escrow) {
+        showToast("Escrow data not found", "error");
+        return;
       }
+      const proof = buildDemoProof(
+        escrowId,
+        ESCROW_ADDRESS,
+        escrow.fiatAmount,
+        escrow.recipient,
+        escrow.refId,
+        escrow.paymentRef
+      );
+      const tx = await verifyRelease(escrowId, proof);
+      showToast(`Funds released! Tx: ${tx.slice(0, 10)}...`, "success");
     } catch (err) {
-      console.error("Verify & release failed:", err);
+      showToast(err instanceof Error ? err.message : "Verify & release failed", "error");
     }
   }
 
   async function handleRefund(escrowId: number) {
     try {
-      await refund(escrowId);
+      const tx = await refund(escrowId);
+      showToast(`Escrow refunded! Tx: ${tx.slice(0, 10)}...`, "success");
     } catch (err) {
-      console.error("Refund failed:", err);
+      showToast(err instanceof Error ? err.message : "Refund failed", "error");
     }
   }
 
@@ -111,6 +140,18 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      {toast && (
+        <div
+          className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 rounded-xl text-sm font-medium shadow-lg transition-all z-50 ${
+            toast.type === "success"
+              ? "bg-emerald-600 text-white"
+              : "bg-red-600 text-white"
+          }`}
+        >
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 }
