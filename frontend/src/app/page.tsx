@@ -5,19 +5,19 @@ import { useAccount } from "wagmi";
 import { Header } from "@/components/layout/Header";
 import { CreateEscrowForm } from "@/components/escrow/CreateEscrowForm";
 import { EscrowList } from "@/components/escrow/EscrowList";
+import { NotConnectedState } from "@/components/home/NotConnectedState";
+import { Toast } from "@/components/ui/Toast";
 import { useEscrows } from "@/hooks/useEscrows";
 import { useCreateEscrow } from "@/hooks/useCreateEscrow";
 import { useMarkPaid } from "@/hooks/useMarkPaid";
 import { useVerifyRelease } from "@/hooks/useVerifyRelease";
 import { useRefund } from "@/hooks/useRefund";
 
-type Toast = { message: string; type: "success" | "error" } | null;
-
-const TX_URL = "https://testnet.monadexplorer.com/tx";
+import type { ToastData } from "@/components/ui/Toast";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
-  const [toast, setToast] = useState<Toast>(null);
+  const [toast, setToast] = useState<ToastData>(null);
   const [creatingFormData, setCreatingFormData] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -101,15 +101,7 @@ export default function Home() {
       <Header />
 
       <main className="w-full max-w-5xl px-6 py-8">
-        {!isConnected && (
-          <div className="flex flex-col items-center justify-center py-20 text-zinc-400">
-            <svg className="w-12 h-12 mb-4 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-            </svg>
-            <p className="text-sm font-medium">Connect your wallet</p>
-            <p className="text-xs text-zinc-400 mt-1">to create and manage escrows</p>
-          </div>
-        )}
+        {!isConnected && <NotConnectedState />}
 
         {isConnected && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -143,17 +135,7 @@ export default function Home() {
         )}
       </main>
 
-      {toast && (
-        <div
-          className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 rounded-xl text-sm font-medium shadow-lg transition-all z-50 flex items-center gap-3 ${
-            toast.type === "success"
-              ? "bg-emerald-600 text-white"
-              : "bg-red-600 text-white"
-          }`}
-        >
-          <span>{toast.message}</span>
-        </div>
-      )}
+      <Toast toast={toast} />
     </div>
   );
 }
