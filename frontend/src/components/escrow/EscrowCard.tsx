@@ -11,22 +11,22 @@ const TIMEOUT_DURATION = 2 * 60 * 60;
 
 interface EscrowCardProps {
   escrow: EscrowData;
-  onMarkAsPaid?: (escrowId: number) => void;
+  onSimulatePayment?: (escrowId: number) => void;
   onVerify?: (escrowId: number) => void;
   onRefund?: (escrowId: number) => void;
-  markPending?: boolean;
+  simulatePending?: boolean;
   verifyPending?: boolean;
   refundPending?: boolean;
 }
 
-type ConfirmAction = "mark" | "verify" | "refund" | null;
+type ConfirmAction = "simulate" | "verify" | "refund" | null;
 
 export function EscrowCard({
   escrow,
-  onMarkAsPaid,
+  onSimulatePayment,
   onVerify,
   onRefund,
-  markPending,
+  simulatePending,
   verifyPending,
   refundPending,
 }: EscrowCardProps) {
@@ -50,7 +50,7 @@ export function EscrowCard({
   }, [escrow]);
 
   const isBuyerAction =
-    escrow.state === EscrowState.Funded && onMarkAsPaid;
+    escrow.state === EscrowState.Funded && onSimulatePayment;
   const isVerifyAction =
     escrow.state === EscrowState.AwaitingProof && onVerify;
   const isRefundAction =
@@ -58,12 +58,12 @@ export function EscrowCard({
     (escrow.state === EscrowState.Funded ||
       escrow.state === EscrowState.AwaitingProof);
 
-  const confirmConfig = confirmAction === "mark" ? {
-    title: "Mark as Paid",
-    message: "Confirm that the buyer has paid the fiat amount off-chain. This will move the escrow to await proof.",
-    confirmLabel: "Mark as Paid",
-    onConfirm: () => { setConfirmAction(null); onMarkAsPaid!(escrow.escrowId); },
-    loading: markPending,
+  const confirmConfig = confirmAction === "simulate" ? {
+    title: "Simulate Stripe Payment",
+    message: `This will simulate charging $${escrow.fiatAmount} via Stripe to ${escrow.recipient}, then mark the payment as complete on-chain.`,
+    confirmLabel: "Charge $${escrow.fiatAmount}",
+    onConfirm: () => { setConfirmAction(null); onSimulatePayment!(escrow.escrowId); },
+    loading: simulatePending,
   } : confirmAction === "verify" ? {
     title: "Verify & Release",
     message: "This will generate a proof and release the locked crypto to the buyer. This action cannot be undone.",
@@ -149,16 +149,16 @@ export function EscrowCard({
         <div className="flex gap-2">
           {isBuyerAction && (
             <button
-              onClick={() => setConfirmAction("mark")}
-              disabled={markPending}
+              onClick={() => setConfirmAction("simulate")}
+              disabled={simulatePending}
               className={`flex-1 rounded-lg text-sm font-medium py-2 transition-colors flex items-center justify-center gap-2 ${
-                markPending
+                simulatePending
                   ? "bg-blue-300 text-white cursor-not-allowed"
                   : "bg-blue-600 text-white hover:bg-blue-700"
               }`}
             >
-              {markPending && <LoadingSpinner size={14} />}
-              {markPending ? "Marking..." : "Mark as Paid"}
+              {simulatePending && <LoadingSpinner size={14} />}
+              {simulatePending ? "Processing..." : "Simulate Stripe Payment"}
             </button>
           )}
           {isVerifyAction && (
