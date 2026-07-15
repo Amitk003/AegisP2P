@@ -8,7 +8,7 @@ export function buildDemoProof(
   refId: string,
   paymentRef: string
 ): `0x${string}` {
-  const context = `${escrowId}:${contractAddress}`;
+  const context = `${escrowId}:${contractAddress.toLowerCase()}`;
   const parameters = `{"amount":"${fiatAmount}","recipient":"${recipient}","reference":"${refId}","memo":"${paymentRef}"}`;
   const identifier = keccak256(stringToHex(`${escrowId}-${Date.now()}-${Math.random()}`));
 
