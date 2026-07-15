@@ -14,18 +14,21 @@ import {
 } from "@/hooks/useContractActions";
 import { ESCROW_ADDRESS } from "@/lib/contract";
 import { buildDemoProof } from "@/lib/demoProof";
-import { EscrowData } from "@/types/escrow";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 type Toast = { message: string; type: "success" | "error" } | null;
+
+const TX_URL = "https://testnet.monadexplorer.com/tx";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [toast, setToast] = useState<Toast>(null);
+  const [creatingFormData, setCreatingFormData] = useState(false);
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 4000);
+    const t = setTimeout(() => setToast(null), 5000);
     return () => clearTimeout(t);
   }, [toast]);
 
@@ -47,18 +50,21 @@ export default function Home() {
     recipient: string;
     refId: string;
   }) {
+    setCreatingFormData(true);
     try {
       const tx = await createEscrow(data.buyer, data.cryptoAmount, data.fiatAmount, data.recipient, data.refId);
-      showToast(`Escrow created! Tx: ${tx.slice(0, 10)}...`, "success");
+      showToast(`Escrow created!`, "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Create escrow failed", "error");
+    } finally {
+      setCreatingFormData(false);
     }
   }
 
   async function handleMarkAsPaid(escrowId: number) {
     try {
-      const tx = await markAsPaid(escrowId);
-      showToast(`Payment marked! Tx: ${tx.slice(0, 10)}...`, "success");
+      await markAsPaid(escrowId);
+      showToast(`Payment marked!`, "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Mark as paid failed", "error");
     }
@@ -79,8 +85,8 @@ export default function Home() {
         escrow.refId,
         escrow.paymentRef
       );
-      const tx = await verifyRelease(escrowId, proof);
-      showToast(`Funds released! Tx: ${tx.slice(0, 10)}...`, "success");
+      await verifyRelease(escrowId, proof);
+      showToast(`Funds released!`, "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Verify & release failed", "error");
     }
@@ -88,8 +94,8 @@ export default function Home() {
 
   async function handleRefund(escrowId: number) {
     try {
-      const tx = await refund(escrowId);
-      showToast(`Escrow refunded! Tx: ${tx.slice(0, 10)}...`, "success");
+      await refund(escrowId);
+      showToast(`Escrow refunded!`, "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Refund failed", "error");
     }
@@ -109,8 +115,12 @@ export default function Home() {
 
       <main className="w-full max-w-5xl px-6 py-8">
         {!isConnected && (
-          <div className="text-center py-12 text-zinc-500">
-            Connect your wallet to create and manage escrows
+          <div className="flex flex-col items-center justify-center py-20 text-zinc-400">
+            <svg className="w-12 h-12 mb-4 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+            <p className="text-sm font-medium">Connect your wallet</p>
+            <p className="text-xs text-zinc-400 mt-1">to create and manage escrows</p>
           </div>
         )}
 
@@ -120,7 +130,10 @@ export default function Home() {
               <h2 className="text-lg font-semibold text-zinc-900 mb-4">
                 New Escrow
               </h2>
-              <CreateEscrowForm onSubmit={handleCreate} />
+              <CreateEscrowForm
+                onSubmit={handleCreate}
+                pending={isCreating || creatingFormData}
+              />
             </div>
 
             <div className="lg:col-span-2">
@@ -134,7 +147,9 @@ export default function Home() {
                 onMarkAsPaid={handleMarkAsPaid}
                 onVerify={handleVerify}
                 onRefund={handleRefund}
-                actionPending={isCreating || isMarking || isVerifying || isRefunding}
+                markPending={isMarking}
+                verifyPending={isVerifying}
+                refundPending={isRefunding}
               />
             </div>
           </div>
@@ -143,13 +158,13 @@ export default function Home() {
 
       {toast && (
         <div
-          className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 rounded-xl text-sm font-medium shadow-lg transition-all z-50 ${
+          className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 rounded-xl text-sm font-medium shadow-lg transition-all z-50 flex items-center gap-3 ${
             toast.type === "success"
               ? "bg-emerald-600 text-white"
               : "bg-red-600 text-white"
           }`}
         >
-          {toast.message}
+          <span>{toast.message}</span>
         </div>
       )}
     </div>
