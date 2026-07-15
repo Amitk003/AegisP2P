@@ -59,7 +59,6 @@ export function useEscrows() {
 
   useEffect(() => {
     if (isNextIdLoading) return;
-    if (!loading) return;
     if (!escrowResults && escrowReads.length > 0) return;
     const parsed: EscrowData[] = [];
     if (escrowResults) {
@@ -71,7 +70,7 @@ export function useEscrows() {
     }
     setEscrows(parsed);
     setLoading(false);
-  }, [escrowResults, escrowReads.length, isNextIdLoading, loading]);
+  }, [escrowResults, escrowReads.length, isNextIdLoading]);
 
   const updateEscrow = useCallback((escrowId: number, updater: (e: EscrowData) => EscrowData) => {
     setEscrows((prev) => prev.map((e) => (e.escrowId === escrowId ? updater(e) : e)));
