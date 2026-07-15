@@ -77,7 +77,7 @@ export default function Home() {
         showToast("Escrow data not found", "error");
         return;
       }
-      const proof = buildDemoProof(
+      const proof = await buildDemoProof(
         escrowId,
         ESCROW_ADDRESS,
         escrow.fiatAmount,
