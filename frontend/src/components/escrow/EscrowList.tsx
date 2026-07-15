@@ -9,10 +9,10 @@ interface EscrowListProps {
   escrows: EscrowData[];
   loading?: boolean;
   currentUser?: string;
-  onMarkAsPaid?: (escrowId: number) => void;
+  onSimulatePayment?: (escrowId: number) => void;
   onVerify?: (escrowId: number) => void;
   onRefund?: (escrowId: number) => void;
-  markPending?: boolean;
+  simulatePending?: boolean;
   verifyPending?: boolean;
   refundPending?: boolean;
 }
@@ -21,10 +21,10 @@ export function EscrowList({
   escrows,
   loading,
   currentUser,
-  onMarkAsPaid,
+  onSimulatePayment,
   onVerify,
   onRefund,
-  markPending,
+  simulatePending,
   verifyPending,
   refundPending,
 }: EscrowListProps) {
@@ -60,10 +60,10 @@ export function EscrowList({
           <EscrowCard
             key={escrow.escrowId}
             escrow={escrow}
-            onMarkAsPaid={isBuyer ? onMarkAsPaid : undefined}
+            onSimulatePayment={isBuyer ? onSimulatePayment : undefined}
             onVerify={isSeller ? onVerify : undefined}
             onRefund={isSeller ? onRefund : undefined}
-            markPending={markPending}
+            simulatePending={simulatePending}
             verifyPending={verifyPending}
             refundPending={refundPending}
           />

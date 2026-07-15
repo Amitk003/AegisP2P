@@ -9,7 +9,7 @@ import { NotConnectedState } from "@/components/home/NotConnectedState";
 import { Toast } from "@/components/ui/Toast";
 import { useEscrows } from "@/hooks/useEscrows";
 import { useCreateEscrow } from "@/hooks/useCreateEscrow";
-import { useMarkPaid } from "@/hooks/useMarkPaid";
+import { useSimulatePayment } from "@/hooks/useSimulatePayment";
 import { useVerifyRelease } from "@/hooks/useVerifyRelease";
 import { useRefund } from "@/hooks/useRefund";
 
@@ -34,7 +34,7 @@ export default function Home() {
   const { address, isConnected } = useAccount();
   const { escrows, loading } = useEscrows();
   const { createEscrow, isPending: isCreating } = useCreateEscrow();
-  const { markAsPaid, isPending: isMarking } = useMarkPaid();
+  const { simulatePayment, isPending: isSimulating } = useSimulatePayment();
   const { verifyRelease, isPending: isVerifying } = useVerifyRelease();
   const { refund, isPending: isRefunding } = useRefund();
 
@@ -56,12 +56,17 @@ export default function Home() {
     }
   }
 
-  async function handleMarkAsPaid(escrowId: number) {
+  async function handleSimulatePayment(escrowId: number) {
     try {
-      await markAsPaid(escrowId);
-      showToast(`Payment marked!`, "success");
+      const escrow = escrows.find((e) => e.escrowId === escrowId);
+      if (!escrow) {
+        showToast("Escrow not found", "error");
+        return;
+      }
+      const txId = await simulatePayment(escrowId, escrow.fiatAmount, escrow.recipient);
+      showToast(`Stripe charge ${txId} succeeded! Payment marked on-chain.`, "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Mark as paid failed", "error");
+      showToast(err instanceof Error ? err.message : "Payment simulation failed", "error");
     }
   }
 
@@ -123,10 +128,10 @@ export default function Home() {
                 escrows={escrows}
                 loading={loading}
                 currentUser={address}
-                onMarkAsPaid={handleMarkAsPaid}
+                onSimulatePayment={handleSimulatePayment}
                 onVerify={handleVerify}
                 onRefund={handleRefund}
-                markPending={isMarking}
+                simulatePending={isSimulating}
                 verifyPending={isVerifying}
                 refundPending={isRefunding}
               />
